@@ -1,6 +1,6 @@
 # Define the AWS provider configuration.
 provider "aws" {
-  region = "us-east-1"  # Replace with your desired AWS region.
+  region = "ap-northeast-1"  # Replace with your desired AWS region.
 }
 
 variable "cidr" {
@@ -8,8 +8,8 @@ variable "cidr" {
 }
 
 resource "aws_key_pair" "example" {
-  key_name   = "terraform-demo-abhi"  # Replace with your desired key name
-  public_key = file("~/.ssh/id_rsa.pub")  # Replace with the path to your public key file
+  key_name   = "terraform-demo-createdbyautmation"  # Replace with your desired key name
+  public_key = file("/home/ubuntu/.ssh/id_rsa.pub")  # Replace with the path to your public key file
 }
 
 resource "aws_vpc" "myvpc" {
@@ -19,7 +19,7 @@ resource "aws_vpc" "myvpc" {
 resource "aws_subnet" "sub1" {
   vpc_id                  = aws_vpc.myvpc.id
   cidr_block              = "10.0.0.0/24"
-  availability_zone       = "us-east-1a"
+  availability_zone       = "ap-northeast-1a"
   map_public_ip_on_launch = true
 }
 
@@ -73,7 +73,7 @@ resource "aws_security_group" "webSg" {
 }
 
 resource "aws_instance" "server" {
-  ami                    = "ami-0261755bbcb8c4a84"
+  ami                    = "ami-07c589821f2b353aa"
   instance_type          = "t2.micro"
   key_name      = aws_key_pair.example.key_name
   vpc_security_group_ids = [aws_security_group.webSg.id]
@@ -82,25 +82,24 @@ resource "aws_instance" "server" {
   connection {
     type        = "ssh"
     user        = "ubuntu"  # Replace with the appropriate username for your EC2 instance
-    private_key = file("~/.ssh/id_rsa")  # Replace with the path to your private key
+    private_key = file("/home/ubuntu/.ssh/id_rsa")  # Replace with the path to your private key
     host        = self.public_ip
   }
-
-  # File provisioner to copy a file from local to the remote EC2 instance
-  provisioner "file" {
-    source      = "app.py"  # Replace with the path to your local file
+provisioner "file" {
+    source      = "/home/ubuntu/provisioners/app.py"  # Replace with the path to your local file
     destination = "/home/ubuntu/app.py"  # Replace with the path on the remote instance
   }
+
+
 
   provisioner "remote-exec" {
     inline = [
       "echo 'Hello from the remote instance'",
       "sudo apt update -y",  # Update package lists (for ubuntu)
       "sudo apt-get install -y python3-pip",  # Example package installation
-      "cd /home/ubuntu",
+      "cd /home/ubuntu/",
       "sudo pip3 install flask",
       "sudo python3 app.py &",
     ]
   }
 }
-
